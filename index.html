@@ -2,19 +2,35 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Aperture Sandbox v1.0</title>
-    <link rel="stylesheet" href="style.css">
+    <title>Aperture x GMod Hybrid</title>
+    <style>
+        body { margin: 0; overflow: hidden; background: #000; font-family: 'Segoe UI', sans-serif; }
+        #crosshair { position: fixed; top: 50%; left: 50%; width: 10px; height: 10px; border: 2px solid #00ff00; border-radius: 50%; transform: translate(-50%, -50%); pointer-events: none; }
+        
+        /* The "Original Game" Corner View */
+        #original-game-view { 
+            position: absolute; top: 20px; right: 20px; 
+            width: 320px; height: 180px; 
+            border: 4px solid #333; border-radius: 4px;
+            background: #000; overflow: hidden;
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+        }
+
+        #hud { position: absolute; bottom: 30px; left: 30px; color: #00a2ff; font-weight: bold; font-size: 24px; }
+    </style>
 </head>
 <body>
-    <div id="crosshair"></div>
-    <div id="hud">
-        <div class="ammo">PORTAL DEVICE: READY</div>
-        <div class="hint">[Q] Spawn Cube | [LMB/RMB] Portals | [R] Reset</div>
+    <div id="original-game-view">
+        <div style="color: white; padding: 5px; font-size: 10px; background: rgba(0,0,0,0.5); position: absolute;">SOURCE ENGINE - PORTAL_01</div>
     </div>
+    <div id="crosshair"></div>
+    <div id="hud">HP: 100 | PHYSGUN: ACTIVE</div>
+
     <script type="importmap">
         {
             "imports": {
                 "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+                "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/",
                 "cannon": "https://unpkg.com/cannon-es@0.20.0/dist/cannon-es.js"
             }
         }
