@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Aperture Sandbox</title>
+    <style>
+        body { margin: 0; overflow: hidden; background: #000; font-family: 'Segoe UI', sans-serif; }
+        #crosshair { position: fixed; top: 50%; left: 50%; width: 12px; height: 12px; border: 2px solid #fff; border-radius: 50%; transform: translate(-50%, -50%); pointer-events: none; mix-blend-mode: difference; }
+        #hud { position: absolute; bottom: 20px; left: 20px; color: #00a2ff; text-shadow: 0 0 5px #00a2ff; }
+        #menu { position: absolute; top: 20px; right: 20px; color: white; background: rgba(0,0,0,0.5); padding: 15px; border-radius: 8px; border-left: 4px solid #ff9600; }
+    </style>
+</head>
+<body>
+    <div id="crosshair"></div>
+    <div id="hud">Aperture Science Handheld Portal Device - Online</div>
+    <div id="menu">
+        <b>[Q]</b> Spawn Physics Cube<br>
+        <b>[LMB]</b> Blue Portal<br>
+        <b>[RMB]</b> Orange Portal
+    </div>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+                "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/",
+                "cannon": "https://unpkg.com/cannon-es@0.20.0/dist/cannon-es.js"
+            }
+        }
+    </script>
+    <script type="module" src="main.js"></script>
+</body>
+</html>
