@@ -2,29 +2,28 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Aperture x GMod Hybrid</title>
+    <title>GMod x Portal Hybrid</title>
     <style>
-        body { margin: 0; overflow: hidden; background: #000; font-family: 'Segoe UI', sans-serif; }
-        #crosshair { position: fixed; top: 50%; left: 50%; width: 10px; height: 10px; border: 2px solid #00ff00; border-radius: 50%; transform: translate(-50%, -50%); pointer-events: none; }
-        
-        /* The "Original Game" Corner View */
+        body { margin: 0; background: #000; overflow: hidden; font-family: monospace; }
+        #crosshair { position: fixed; top: 50%; left: 50%; width: 15px; height: 15px; border: 1px solid #00ffff; border-radius: 50%; transform: translate(-50%, -50%); pointer-events: none; }
         #original-game-view { 
             position: absolute; top: 20px; right: 20px; 
-            width: 320px; height: 180px; 
-            border: 4px solid #333; border-radius: 4px;
-            background: #000; overflow: hidden;
-            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+            width: 280px; height: 160px; 
+            border: 2px solid #555; background: #111;
+            box-shadow: 0 0 15px rgba(0,255,255,0.2);
         }
-
-        #hud { position: absolute; bottom: 30px; left: 30px; color: #00a2ff; font-weight: bold; font-size: 24px; }
+        #hud { position: absolute; bottom: 20px; left: 20px; color: #00ffff; text-shadow: 0 0 5px #00ffff; }
     </style>
 </head>
 <body>
     <div id="original-game-view">
-        <div style="color: white; padding: 5px; font-size: 10px; background: rgba(0,0,0,0.5); position: absolute;">SOURCE ENGINE - PORTAL_01</div>
+        <div style="color: #666; font-size: 10px; padding: 5px;">REMOTE_CAM_01</div>
     </div>
     <div id="crosshair"></div>
-    <div id="hud">HP: 100 | PHYSGUN: ACTIVE</div>
+    <div id="hud">
+        PHYSGUN: ENGAGED<br>
+        [Q] SPAWN PROP | [LMB] GRAB | [MOUSE] LOOK
+    </div>
 
     <script type="importmap">
         {
