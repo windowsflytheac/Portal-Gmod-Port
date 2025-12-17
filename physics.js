@@ -29,9 +29,9 @@ export function createBox(scene, pWorld, w, h, d, x, y, z, mass, color) {
         shape: new CANNON.Box(new CANNON.Vec3(w/2, h/2, d/2))
     });
     body.position.set(x, y, z);
+    mesh.userData.physicsBody = body; // Link for Physgun to find
+    
     pWorld.world.addBody(body);
-
-    if (mass > 0) {
-        pWorld.items.push({ mesh, body });
-    }
+    if (mass > 0) pWorld.items.push({ mesh, body });
+    return body;
 }
