@@ -1,100 +1,51 @@
-import * as THREE from 'three';
-import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
-import { PhysicsWorld, createBox } from './physics.js';
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Aperture Sandbox - Menu Patch</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body, html { width: 100%; height: 100%; overflow: hidden; background: #000; font-family: 'Courier New', monospace; }
+        canvas { position: absolute; top: 0; left: 0; z-index: 1; }
 
-const scene = new THREE.Scene();
-const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-renderer.setSize(window.innerWidth, window.innerHeight);
-renderer.setPixelRatio(window.devicePixelRatio);
-document.body.appendChild(renderer.domElement);
-
-const world = new PhysicsWorld();
-
-// --- LIGHTING FIX ---
-// This adds depth so the cubes aren't flat green
-const ambient = new THREE.AmbientLight(0xffffff, 0.4);
-scene.add(ambient);
-const pointLight = new THREE.PointLight(0x00ffff, 100);
-pointLight.position.set(5, 10, 5);
-scene.add(pointLight);
-
-// --- PHYSGUN PATCH ---
-let physgun = null;
-const loader = new GLTFLoader();
-loader.load('./models/physgun.glb', (gltf) => {
-    physgun = gltf.scene;
-    physgun.scale.set(0.1, 0.1, 0.1);
-    
-    // Positioned for the bottom-right corner hand view
-    physgun.position.set(0.7, -0.5, -1.2); 
-    physgun.rotation.y = Math.PI + 0.35; 
-    
-    camera.add(physgun);
-    scene.add(camera);
-});
-
-// --- ASPECT RATIO PATCH ---
-window.addEventListener('resize', () => {
-    camera.aspect = window.innerWidth / window.innerHeight;
-    camera.updateProjectionMatrix();
-    renderer.setSize(window.innerWidth, window.innerHeight);
-});
-
-// --- GRAB MECHANICS ---
-let grabbedBody = null;
-const raycaster = new THREE.Raycaster();
-
-window.addEventListener('mousedown', (e) => {
-    if (e.button === 0) {
-        raycaster.setFromCamera({x: 0, y: 0}, camera);
-        const hits = raycaster.intersectObjects(scene.children);
-        if (hits.length > 0 && hits[0].object.userData.physicsBody) {
-            grabbedBody = hits[0].object.userData.physicsBody;
-            grabbedBody.mass = 0; 
-            grabbedBody.velocity.set(0,0,0);
+        /* Start Menu Styling */
+        #menu-overlay {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.9); z-index: 100;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            color: #00ffff;
         }
-    }
-});
 
-window.addEventListener('mouseup', () => {
-    if (grabbedBody) {
-        grabbedBody.mass = 5;
-        grabbedBody.updateMassProperties();
-        grabbedBody = null;
-    }
-});
+        .menu-btn {
+            background: transparent; border: 2px solid #00ffff; color: #00ffff;
+            padding: 15px 40px; margin: 10px; cursor: pointer; font-size: 20px;
+            transition: 0.3s;
+        }
+        .menu-btn:hover { background: #00ffff; color: #000; box-shadow: 0 0 20px #00ffff; }
 
-// --- MAP & SPAWNING ---
-createBox(scene, world, 60, 1, 60, 0, -0.5, 0, 0, 0x1a1a1a); // Dark Floor
+        .warning { color: #ff0000; font-size: 12px; margin-top: 5px; visibility: hidden; }
 
-window.addEventListener('keydown', (e) => {
-    if (e.code === 'KeyQ') {
-        const dir = new THREE.Vector3(0,0,-1).applyQuaternion(camera.quaternion);
-        createBox(scene, world, 2, 2, 2, camera.position.x + dir.x*5, 5, camera.position.z + dir.z*5, 3, 0x00ff00);
-    }
-});
+        #ui-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 10; pointer-events: none; display: none; }
+        #original-game-view { position: absolute; top: 20px; right: 20px; width: 280px; height: 160px; border: 2px solid #00ffff; background: #000; }
+        #hud { position: absolute; bottom: 30px; left: 30px; color: #00ffff; }
+    </style>
+</head>
+<body>
+    <div id="menu-overlay">
+        <h1>APERTURE SCIENCE SANDBOX</h1>
+        <button class="menu-btn" id="start-btn">START EXPERIMENT</button>
+        <button class="menu-btn" id="fucked-btn">FUCKED PHYSICS ENGINE: OFF</button>
+        <p id="fucked-warning" class="warning">WARNING: You are about to fuck up the physics engine.<br>Disable in settings (restart required).</p>
+    </div>
 
-function animate() {
-    requestAnimationFrame(animate);
-    world.update(scene);
+    <div id="ui-layer">
+        <div id="original-game-view"><div style="color: #00ffff; font-size: 10px; padding: 5px;">CAM_01: LIVE</div></div>
+        <div id="hud">HP: 100 | [Q] SPAWN | [LMB] GRAB</div>
+    </div>
 
-    if (grabbedBody) {
-        const target = new THREE.Vector3(0, 0, -8).applyQuaternion(camera.quaternion).add(camera.position);
-        grabbedBody.position.copy(target);
-    }
-
-    renderer.render(scene, camera);
-}
-animate();
-
-// Pointer Lock for controls
-document.addEventListener('click', () => renderer.domElement.requestPointerLock());
-document.addEventListener('mousemove', (e) => {
-    if (document.pointerLockElement) {
-        camera.rotation.y -= e.movementX * 0.002;
-        camera.rotation.x -= e.movementY * 0.002;
-        camera.rotation.x = Math.max(-1.5, Math.min(1.5, camera.rotation.x));
-    }
-});
-camera.rotation.order = 'YXZ';
+    <script type="importmap">
+        { "imports": { "three": "https://unpkg.com/three@0.160.0/build/three.module.js", "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/", "cannon": "https://unpkg.com/cannon-es@0.20.0/dist/cannon-es.js" } }
+    </script>
+    <script type="module" src="main.js"></script>
+</body>
+</html>
