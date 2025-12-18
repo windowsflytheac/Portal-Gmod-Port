@@ -2,7 +2,6 @@ import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { PhysicsWorld, createBox } from './physics.js';
 
-// --- INITIALIZATION ---
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
 const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
@@ -12,12 +11,13 @@ document.body.appendChild(renderer.domElement);
 
 const world = new PhysicsWorld();
 
-// --- LIGHTING PATCH (Prevents Black Textures) ---
-const ambient = new THREE.AmbientLight(0xffffff, 0.7);
+// --- LIGHTING FIX ---
+// This adds depth so the cubes aren't flat green
+const ambient = new THREE.AmbientLight(0xffffff, 0.4);
 scene.add(ambient);
-const sun = new THREE.DirectionalLight(0xffffff, 1);
-sun.position.set(5, 10, 7);
-scene.add(sun);
+const pointLight = new THREE.PointLight(0x00ffff, 100);
+pointLight.position.set(5, 10, 5);
+scene.add(pointLight);
 
 // --- PHYSGUN PATCH ---
 let physgun = null;
@@ -26,33 +26,31 @@ loader.load('./models/physgun.glb', (gltf) => {
     physgun = gltf.scene;
     physgun.scale.set(0.1, 0.1, 0.1);
     
-    // Positioned for First-Person Right Hand
-    physgun.position.set(0.6, -0.5, -1.0); 
-    physgun.rotation.y = Math.PI + 0.3; 
+    // Positioned for the bottom-right corner hand view
+    physgun.position.set(0.7, -0.5, -1.2); 
+    physgun.rotation.y = Math.PI + 0.35; 
     
     camera.add(physgun);
     scene.add(camera);
 });
 
-// --- FULLSCREEN RESIZE PATCH ---
+// --- ASPECT RATIO PATCH ---
 window.addEventListener('resize', () => {
-    const w = window.innerWidth;
-    const h = window.innerHeight;
-    camera.aspect = w / h;
+    camera.aspect = window.innerWidth / window.innerHeight;
     camera.updateProjectionMatrix();
-    renderer.setSize(w, h);
+    renderer.setSize(window.innerWidth, window.innerHeight);
 });
 
-// --- PHYSICS GRAB PATCH ---
+// --- GRAB MECHANICS ---
 let grabbedBody = null;
 const raycaster = new THREE.Raycaster();
 
 window.addEventListener('mousedown', (e) => {
     if (e.button === 0) {
         raycaster.setFromCamera({x: 0, y: 0}, camera);
-        const intersects = raycaster.intersectObjects(scene.children);
-        if (intersects.length > 0 && intersects[0].object.userData.physicsBody) {
-            grabbedBody = intersects[0].object.userData.physicsBody;
+        const hits = raycaster.intersectObjects(scene.children);
+        if (hits.length > 0 && hits[0].object.userData.physicsBody) {
+            grabbedBody = hits[0].object.userData.physicsBody;
             grabbedBody.mass = 0; 
             grabbedBody.velocity.set(0,0,0);
         }
@@ -67,19 +65,22 @@ window.addEventListener('mouseup', () => {
     }
 });
 
-// --- TEST CHAMBER MAP ---
-createBox(scene, world, 50, 1, 50, 0, -0.5, 0, 0, 0x333333); // Ground
-createBox(scene, world, 1, 10, 50, -10, 5, 0, 0, 0x555555); // Wall L
+// --- MAP & SPAWNING ---
+createBox(scene, world, 60, 1, 60, 0, -0.5, 0, 0, 0x1a1a1a); // Dark Floor
 
-// --- ANIMATION ---
+window.addEventListener('keydown', (e) => {
+    if (e.code === 'KeyQ') {
+        const dir = new THREE.Vector3(0,0,-1).applyQuaternion(camera.quaternion);
+        createBox(scene, world, 2, 2, 2, camera.position.x + dir.x*5, 5, camera.position.z + dir.z*5, 3, 0x00ff00);
+    }
+});
+
 function animate() {
     requestAnimationFrame(animate);
     world.update(scene);
 
     if (grabbedBody) {
-        const target = new THREE.Vector3(0, 0, -6); // Hold distance
-        target.applyQuaternion(camera.quaternion);
-        target.add(camera.position);
+        const target = new THREE.Vector3(0, 0, -8).applyQuaternion(camera.quaternion).add(camera.position);
         grabbedBody.position.copy(target);
     }
 
@@ -87,7 +88,7 @@ function animate() {
 }
 animate();
 
-// Controls
+// Pointer Lock for controls
 document.addEventListener('click', () => renderer.domElement.requestPointerLock());
 document.addEventListener('mousemove', (e) => {
     if (document.pointerLockElement) {
