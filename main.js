@@ -1,14 +1,12 @@
 import * as THREE from 'three';
 import { PhysicsWorld, createBox } from './physics.js';
 
+// --- STATE ---
 let fuckedMode = false;
-const startBtn = document.getElementById('start-btn');
-const fuckedBtn = document.getElementById('fucked-btn');
-const warning = document.getElementById('fucked-warning');
+let noclip = false;
 const menu = document.getElementById('menu-overlay');
 const ui = document.getElementById('ui-layer');
 
-// --- SETUP ---
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
 const renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -17,33 +15,59 @@ document.body.appendChild(renderer.domElement);
 
 const world = new PhysicsWorld();
 
-// --- MENU LOGIC ---
-fuckedBtn.addEventListener('click', () => {
+// --- MENU BUTTONS ---
+document.getElementById('fucked-btn').addEventListener('click', (e) => {
     fuckedMode = !fuckedMode;
-    fuckedBtn.innerText = `FUCKED PHYSICS ENGINE: ${fuckedMode ? 'ON' : 'OFF'}`;
-    warning.style.visibility = fuckedMode ? 'visible' : 'hidden';
-    fuckedBtn.style.borderColor = fuckedMode ? '#ff0000' : '#00ffff';
-    fuckedBtn.style.color = fuckedMode ? '#ff0000' : '#00ffff';
+    e.target.innerText = `FUCKED PHYSICS ENGINE: ${fuckedMode ? 'ON' : 'OFF'}`;
+    document.getElementById('fucked-warning').style.visibility = fuckedMode ? 'visible' : 'hidden';
 });
 
-startBtn.addEventListener('click', () => {
+document.getElementById('start-btn').addEventListener('click', () => {
     menu.style.display = 'none';
     ui.style.display = 'block';
     renderer.domElement.requestPointerLock();
     
-    // Apply "Fucked" Physics
     if (fuckedMode) {
-        world.world.gravity.set(0, 50.82, 0); // Reverse/High Gravity
-        world.timeStep = 1 / 10; // Extremely unstable time step
+        world.world.gravity.set(0, 150, 0); // Extreme chaotic gravity
+        world.timeStep = 1 / 5; // Glitchy movement
     }
 });
 
-// --- REMAINDER OF ENGINE ---
-createBox(scene, world, 50, 1, 50, 0, -0.5, 0, 0, 0x1a1a1a);
+// --- NOCLIP & MOVEMENT ---
+const keys = {};
+window.addEventListener('keydown', (e) => {
+    keys[e.code] = true;
+    if (e.code === 'KeyV') noclip = !noclip; // Toggle Noclip
+});
+window.addEventListener('keyup', (e) => keys[e.code] = false);
+
+function handleMovement() {
+    const speed = noclip ? 0.5 : 0.15;
+    if (keys['KeyW']) camera.translateZ(-speed);
+    if (keys['KeyS']) camera.translateZ(speed);
+    if (keys['KeyA']) camera.translateX(-speed);
+    if (keys['KeyD']) camera.translateX(speed);
+    
+    if (!noclip) camera.position.y = 2; // Floor lock
+}
+
+// --- ENGINE LOOP ---
+createBox(scene, world, 100, 1, 100, 0, -0.5, 0, 0, 0x222222);
 
 function animate() {
     requestAnimationFrame(animate);
-    world.update(scene); // Uses the updated timeStep
+    handleMovement();
+    world.update(scene);
     renderer.render(scene, camera);
 }
 animate();
+
+// Mouse Look
+document.addEventListener('mousemove', (e) => {
+    if (document.pointerLockElement) {
+        camera.rotation.y -= e.movementX * 0.002;
+        camera.rotation.x -= e.movementY * 0.002;
+        camera.rotation.x = Math.max(-1.5, Math.min(1.5, camera.rotation.x));
+    }
+});
+camera.rotation.order = 'YXZ';
