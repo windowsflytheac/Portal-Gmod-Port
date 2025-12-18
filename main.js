@@ -2,60 +2,59 @@ import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { PhysicsWorld, createBox } from './physics.js';
 
-// --- ENGINE SETUP ---
+// --- INITIALIZATION ---
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-const renderer = new THREE.WebGLRenderer({ antialias: true });
+const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
 renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.setPixelRatio(window.devicePixelRatio);
 document.body.appendChild(renderer.domElement);
 
 const world = new PhysicsWorld();
 
-// --- PHYSGUN & BEAM ---
+// --- LIGHTING PATCH (Prevents Black Textures) ---
+const ambient = new THREE.AmbientLight(0xffffff, 0.7);
+scene.add(ambient);
+const sun = new THREE.DirectionalLight(0xffffff, 1);
+sun.position.set(5, 10, 7);
+scene.add(sun);
+
+// --- PHYSGUN PATCH ---
 let physgun = null;
-let beam, beamLight;
-const beamMaterial = new THREE.LineBasicMaterial({ color: 0x00ffff });
-
-function initPhysgunFX() {
-    // Blue glow at the tip
-    beamLight = new THREE.PointLight(0x00ffff, 2, 5);
-    scene.add(beamLight);
-
-    // The Beam Line
-    const geometry = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(), new THREE.Vector3()]);
-    beam = new THREE.Line(geometry, beamMaterial);
-    beam.visible = false;
-    scene.add(beam);
-}
-
 const loader = new GLTFLoader();
 loader.load('./models/physgun.glb', (gltf) => {
     physgun = gltf.scene;
     physgun.scale.set(0.1, 0.1, 0.1);
-    physgun.position.set(0.5, -0.4, -0.8); // Adjusted for right-hand view
-    physgun.rotation.y = Math.PI; 
+    
+    // Positioned for First-Person Right Hand
+    physgun.position.set(0.6, -0.5, -1.0); 
+    physgun.rotation.y = Math.PI + 0.3; 
+    
     camera.add(physgun);
     scene.add(camera);
-    initPhysgunFX();
 });
 
-// --- INTERACTION LOGIC ---
+// --- FULLSCREEN RESIZE PATCH ---
+window.addEventListener('resize', () => {
+    const w = window.innerWidth;
+    const h = window.innerHeight;
+    camera.aspect = w / h;
+    camera.updateProjectionMatrix();
+    renderer.setSize(w, h);
+});
+
+// --- PHYSICS GRAB PATCH ---
 let grabbedBody = null;
-let grabDist = 7;
+const raycaster = new THREE.Raycaster();
 
 window.addEventListener('mousedown', (e) => {
-    const raycaster = new THREE.Raycaster();
-    raycaster.setFromCamera({x: 0, y: 0}, camera);
-    const intersects = raycaster.intersectObjects(scene.children);
-
-    if (e.button === 0 && intersects.length > 0) {
-        const obj = intersects[0].object;
-        if (obj.userData.physicsBody) {
-            grabbedBody = obj.userData.physicsBody;
-            grabbedBody.mass = 0; // Lock in air
+    if (e.button === 0) {
+        raycaster.setFromCamera({x: 0, y: 0}, camera);
+        const intersects = raycaster.intersectObjects(scene.children);
+        if (intersects.length > 0 && intersects[0].object.userData.physicsBody) {
+            grabbedBody = intersects[0].object.userData.physicsBody;
+            grabbedBody.mass = 0; 
             grabbedBody.velocity.set(0,0,0);
-            grabbedBody.updateMassProperties();
-            beam.visible = true;
         }
     }
 });
@@ -65,44 +64,30 @@ window.addEventListener('mouseup', () => {
         grabbedBody.mass = 5;
         grabbedBody.updateMassProperties();
         grabbedBody = null;
-        beam.visible = false;
     }
 });
 
-// --- MAP & SPAWNING ---
-createBox(scene, world, 50, 1, 50, 0, -0.5, 0, 0, 0x222222); // Floor
-window.addEventListener('keydown', (e) => {
-    if (e.code === 'KeyQ') { // Spawn GMod Prop
-        const dir = new THREE.Vector3();
-        camera.getWorldDirection(dir);
-        createBox(scene, world, 1, 1, 1, camera.position.x + dir.x*5, 2, camera.position.z + dir.z*5, 2, 0x00ff00);
-    }
-});
+// --- TEST CHAMBER MAP ---
+createBox(scene, world, 50, 1, 50, 0, -0.5, 0, 0, 0x333333); // Ground
+createBox(scene, world, 1, 10, 50, -10, 5, 0, 0, 0x555555); // Wall L
 
-// --- ANIMATION LOOP ---
+// --- ANIMATION ---
 function animate() {
     requestAnimationFrame(animate);
     world.update(scene);
 
-    if (grabbedBody && physgun) {
-        // Calculate target position based on camera look direction
-        const targetPos = new THREE.Vector3();
-        camera.getWorldDirection(targetPos);
-        targetPos.multiplyScalar(grabDist).add(camera.position);
-        
-        grabbedBody.position.copy(targetPos);
-
-        // Update Beam FX
-        const muzzlePos = new THREE.Vector3().setFromMatrixPosition(physgun.matrixWorld);
-        beam.geometry.setFromPoints([muzzlePos, grabbedBody.position]);
-        beamLight.position.copy(muzzlePos);
+    if (grabbedBody) {
+        const target = new THREE.Vector3(0, 0, -6); // Hold distance
+        target.applyQuaternion(camera.quaternion);
+        target.add(camera.position);
+        grabbedBody.position.copy(target);
     }
 
     renderer.render(scene, camera);
 }
 animate();
 
-// Pointer Lock
+// Controls
 document.addEventListener('click', () => renderer.domElement.requestPointerLock());
 document.addEventListener('mousemove', (e) => {
     if (document.pointerLockElement) {
