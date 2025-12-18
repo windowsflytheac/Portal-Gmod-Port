@@ -2,13 +2,12 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Aperture Sandbox - Patched</title>
+    <title>Aperture Sandbox - Full Patch</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body, html { width: 100%; height: 100%; overflow: hidden; background: #000; }
         
-        /* FIX: Canvas is now pinned to the background */
+        /* Fixed Background Canvas */
         canvas { 
             position: absolute; top: 0; left: 0; 
             width: 100vw !important; height: 100vh !important; 
@@ -16,26 +15,26 @@
         }
 
         #ui-layer {
-            position: relative; width: 100%; height: 100%;
-            z-index: 10; pointer-events: none; /* Allows clicking through to canvas */
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 10; pointer-events: none;
         }
 
         #original-game-view { 
             position: absolute; top: 20px; right: 20px; 
-            width: 280px; height: 160px; 
+            width: 300px; height: 180px; 
             border: 2px solid #00ffff; background: #000;
-            box-shadow: 0 0 15px rgba(0, 255, 255, 0.3);
+            box-shadow: 0 0 15px rgba(0, 255, 255, 0.4);
         }
 
         #hud { 
             position: absolute; bottom: 30px; left: 30px; 
             color: #00ffff; font-family: 'Courier New', monospace;
-            text-shadow: 2px 2px #000;
+            text-shadow: 2px 2px #000; font-size: 18px;
         }
 
         #crosshair {
             position: absolute; top: 50%; left: 50%;
-            width: 12px; height: 12px; border: 2px solid #00ffff;
+            width: 10px; height: 10px; border: 2px solid #00ffff;
             border-radius: 50%; transform: translate(-50%, -50%);
         }
     </style>
@@ -43,12 +42,12 @@
 <body>
     <div id="ui-layer">
         <div id="original-game-view">
-            <div style="color: #00ffff; font-size: 10px; padding: 5px;">CAM_01: ACTIVE</div>
+            <div style="color: #00ffff; font-size: 11px; padding: 8px;">CAM_01: LIVE FEED</div>
         </div>
         <div id="crosshair"></div>
         <div id="hud">
-            <b>HP: 100</b><br>
-            <b>[Q] SPAWN | [LMB] GRAB</b>
+            HP: 100<br>
+            [Q] SPAWN | [LMB] GRAB
         </div>
     </div>
 
