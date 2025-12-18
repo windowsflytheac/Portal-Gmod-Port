@@ -2,27 +2,54 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>GMod x Portal Hybrid</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aperture Sandbox - Patched</title>
     <style>
-        body { margin: 0; background: #000; overflow: hidden; font-family: monospace; }
-        #crosshair { position: fixed; top: 50%; left: 50%; width: 15px; height: 15px; border: 1px solid #00ffff; border-radius: 50%; transform: translate(-50%, -50%); pointer-events: none; }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body, html { width: 100%; height: 100%; overflow: hidden; background: #000; }
+        
+        /* FIX: Canvas is now pinned to the background */
+        canvas { 
+            position: absolute; top: 0; left: 0; 
+            width: 100vw !important; height: 100vh !important; 
+            z-index: 1; 
+        }
+
+        #ui-layer {
+            position: relative; width: 100%; height: 100%;
+            z-index: 10; pointer-events: none; /* Allows clicking through to canvas */
+        }
+
         #original-game-view { 
             position: absolute; top: 20px; right: 20px; 
             width: 280px; height: 160px; 
-            border: 2px solid #555; background: #111;
-            box-shadow: 0 0 15px rgba(0,255,255,0.2);
+            border: 2px solid #00ffff; background: #000;
+            box-shadow: 0 0 15px rgba(0, 255, 255, 0.3);
         }
-        #hud { position: absolute; bottom: 20px; left: 20px; color: #00ffff; text-shadow: 0 0 5px #00ffff; }
+
+        #hud { 
+            position: absolute; bottom: 30px; left: 30px; 
+            color: #00ffff; font-family: 'Courier New', monospace;
+            text-shadow: 2px 2px #000;
+        }
+
+        #crosshair {
+            position: absolute; top: 50%; left: 50%;
+            width: 12px; height: 12px; border: 2px solid #00ffff;
+            border-radius: 50%; transform: translate(-50%, -50%);
+        }
     </style>
 </head>
 <body>
-    <div id="original-game-view">
-        <div style="color: #666; font-size: 10px; padding: 5px;">REMOTE_CAM_01</div>
-    </div>
-    <div id="crosshair"></div>
-    <div id="hud">
-        PHYSGUN: ENGAGED<br>
-        [Q] SPAWN PROP | [LMB] GRAB | [MOUSE] LOOK
+    <div id="ui-layer">
+        <div id="original-game-view">
+            <div style="color: #00ffff; font-size: 10px; padding: 5px;">CAM_01: ACTIVE</div>
+        </div>
+        <div id="crosshair"></div>
+        <div id="hud">
+            <b>HP: 100</b><br>
+            <b>[Q] SPAWN | [LMB] GRAB</b>
+        </div>
     </div>
 
     <script type="importmap">
